@@ -217,8 +217,8 @@ spec:
             steps {
                 container('gcloud') {
                     sh "gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_ZONE} --project ${GKE_PROJECT}"
-                    sh 'kubectl apply -f k8s/deployment.yaml'
-                    sh 'kubectl apply -f k8s/service.yaml'
+                    sh 'kubectl apply -f spring-petclinic/k8s/deployment.yaml'
+                    sh 'kubectl apply -f spring-petclinic/k8s/service.yaml'
                 }
             }
         }
