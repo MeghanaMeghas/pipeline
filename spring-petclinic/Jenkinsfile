@@ -10,7 +10,7 @@ pipeline {
         GKE_ZONE = 'us-central1-a'
         DOCKER_REGISTRY = 'docker.io/rohith9769'
         DOCKER_IMAGE_NAME = 'pet-image'
-        SONARQUBE_URL = 'http://34.121.131.107:9000'
+        SONARQUBE_URL = 'https://34.121.131.107:9000'
         SONARQUBE_TOKEN = credentials('jenkins-sonar')
     }
     stages {
