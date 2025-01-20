@@ -4,7 +4,6 @@ pipeline {
     tools {
         maven 'm3'
     }
-
     environment {
         GKE_CLUSTER_NAME = 'prod-phase-sonar'
         GKE_PROJECT = 'burner-mankomma'
@@ -28,7 +27,7 @@ metadata:
 spec:
   containers:
     - name: maven
-      image: maven:3.8.7-openjdk-17
+      image: maven:3.8.3-openjdk-17
       command:
         - cat
       tty: true
@@ -67,7 +66,7 @@ metadata:
 spec:
   containers:
     - name: maven
-      image: maven:3.8.7-openjdk-17
+      image: maven:3.8.3-openjdk-17
       command:
         - cat
       tty: true
@@ -108,7 +107,7 @@ metadata:
 spec:
   containers:
     - name: maven
-      image: maven:3.8.7-openjdk-17
+      image: maven:3.8.3-openjdk-17
       command:
         - cat
       tty: true
@@ -149,7 +148,7 @@ metadata:
 spec:
   containers:
     - name: maven
-      image: maven:3.8.7-openjdk-17
+      image: maven:3.8.3-openjdk-17
       command:
         - cat
       tty: true
