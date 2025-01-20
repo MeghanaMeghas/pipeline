@@ -11,8 +11,6 @@ pipeline {
         GKE_ZONE = 'us-central1-a'
         DOCKER_REGISTRY = 'docker.io/meghanacp'
         DOCKER_IMAGE_NAME = 'pet-image'
-        SONARQUBE_URL = 'https://34.121.131.107:9000'
-        SONARQUBE_TOKEN = credentials('jenkins-sonar')
     }
 
     stages {
@@ -94,51 +92,6 @@ spec:
                     script {
                         dir('spring-petclinic') {
                             sh 'mvn clean package -DskipTests'
-                        }
-                    }
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            agent {
-                kubernetes {
-                    label 'petclinic-pod'
-                    defaultContainer 'maven'
-                    yaml '''
-apiVersion: v1
-kind: Pod
-metadata:
-  name: petclinic-pod
-spec:
-  containers:
-    - name: maven
-      image: maven:3.8.3-openjdk-17
-      command:
-        - cat
-      tty: true
-    - name: docker
-      image: docker:19.03.12
-      privileged: true
-      command:
-        - cat
-      tty: true
-  '''
-                }
-            }
-            steps {
-                container('maven') {
-                    script {
-                        dir('spring-petclinic') {
-                            withSonarQubeEnv('jenkins-sonar') {
-                                sh """
-                                    mvn sonar:sonar \
-                                    -Dsonar.projectKey=sonartest \
-                                    -Dsonar.projectName="sonartest" \
-                                    -Dsonar.host.url=${SONARQUBE_URL} \
-                                    -Dsonar.login=${SONARQUBE_TOKEN}
-                                """
-                            }
                         }
                     }
                 }
