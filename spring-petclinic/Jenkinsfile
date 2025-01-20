@@ -6,8 +6,8 @@ pipeline {
     }
 
     environment {
-        GKE_CLUSTER_NAME = 'prod-phase-sonar'
-        GKE_PROJECT = 'burner-mankomma'
+        GKE_CLUSTER_NAME = 'jenkins-cd'
+        GKE_PROJECT = 'phrasal-verve-447910-d9'
         GKE_ZONE = 'us-central1-a'
         DOCKER_REGISTRY = 'docker.io/rohith9769'
         DOCKER_IMAGE_NAME = 'pet-image'
