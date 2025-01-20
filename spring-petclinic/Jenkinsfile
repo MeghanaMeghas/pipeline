@@ -1,0 +1,254 @@
+pipeline {
+    agent none
+
+    tools {
+        maven 'm3'
+    }
+
+    environment {
+        GKE_CLUSTER_NAME = 'prod-phase-sonar'
+        GKE_PROJECT = 'burner-mankomma'
+        GKE_ZONE = 'us-central1-a'
+        DOCKER_REGISTRY = 'docker.io/rohith9769'
+        DOCKER_IMAGE_NAME = 'pet-image'
+        SONARQUBE_URL = 'http://34.121.131.107:9000'
+        SONARQUBE_TOKEN = credentials('jenkins-sonar')
+    }
+
+    stages {
+        stage('Clone Repository') {
+            agent {
+                kubernetes {
+                    label 'petclinic-pod'
+                    defaultContainer 'docker'
+                    yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  name: petclinic-pod
+spec:
+  containers:
+    - name: docker
+      image: docker:19.03.12
+      privileged: true
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
+'''
+                }
+            }
+            steps {
+                checkout scm  // Checkout the repository to Jenkins workspace
+            }
+        }
+
+        stage('Build') {
+            agent {
+                kubernetes {
+                    label 'petclinic-pod'
+                    defaultContainer 'docker'
+                    yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  name: petclinic-pod
+spec:
+  containers:
+    - name: docker
+      image: docker:19.03.12
+      privileged: true
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
+'''
+                }
+            }
+            steps {
+                container('docker') {
+                    sh 'mvn clean package'
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            agent {
+                kubernetes {
+                    label 'petclinic-pod'
+                    defaultContainer 'docker'
+                    yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  name: petclinic-pod
+spec:
+  containers:
+    - name: docker
+      image: docker:19.03.12
+      privileged: true
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
+'''
+                }
+            }
+            steps {
+                container('docker') {
+                    withSonarQubeEnv('jenkins-sonar') {
+                        sh """
+                            mvn sonar:sonar \
+                            -Dsonar.projectKey=sonartest \
+                            -Dsonar.projectName="sonartest" \
+                            -Dsonar.host.url=${SONARQUBE_URL} \
+                            -Dsonar.login=${SONARQUBE_TOKEN}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            agent {
+                kubernetes {
+                    label 'petclinic-pod'
+                    defaultContainer 'docker'
+                    yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  name: petclinic-pod
+spec:
+  containers:
+    - name: docker
+      image: docker:19.03.12
+      privileged: true
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
+'''
+                }
+            }
+            steps {
+                container('docker') {
+                    script {
+                        // Build the Docker image
+                        sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1 ."
+                    }
+                }
+            }
+        }
+
+        stage('Push Docker Image to Docker Hub') {
+            agent {
+                kubernetes {
+                    label 'petclinic-pod'
+                    defaultContainer 'docker'
+                    yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  name: petclinic-pod
+spec:
+  containers:
+    - name: docker
+      image: docker:19.03.12
+      privileged: true
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
+'''
+                }
+            }
+            steps {
+                container('docker') {
+                    script {
+                        // Login to Docker Hub
+                        sh "echo Nani@9769 | docker login -u rohith9769 --password-stdin"
+
+                        // Push Docker image to Docker Hub
+                        sh "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1"
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to GKE') {
+            agent {
+                kubernetes {
+                    label 'petclinic-pod'
+                    defaultContainer 'docker'
+                    yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  name: petclinic-pod
+spec:
+  containers:
+    - name: docker
+      image: docker:19.03.12
+      privileged: true
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
+'''
+                }
+            }
+            steps {
+                container('docker') {
+                    script {
+                        sh "gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_ZONE} --project ${GKE_PROJECT}"
+                        sh 'kubectl apply -f k8s/deployment.yaml'
+                        sh 'kubectl apply -f k8s/service.yaml'
+                    }
+                }
+            }
+        }
+    }
+}
