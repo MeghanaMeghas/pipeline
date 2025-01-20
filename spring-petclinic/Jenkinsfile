@@ -184,7 +184,7 @@ spec:
             agent {
                 kubernetes {
                     label 'petclinic-pod'
-                    defaultContainer 'docker'
+                    defaultContainer 'gcloud'
                     yaml '''
 apiVersion: v1
 kind: Pod
@@ -192,6 +192,11 @@ metadata:
   name: petclinic-pod
 spec:
   containers:
+    - name: gcloud
+      image: google/cloud-sdk:latest
+      command:
+        - cat
+      tty: true
     - name: docker
       image: docker:19.03.12
       privileged: true
@@ -210,7 +215,7 @@ spec:
                 }
             }
             steps {
-                container('docker') {
+                container('gcloud') {
                     sh "gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_ZONE} --project ${GKE_PROJECT}"
                     sh 'kubectl apply -f k8s/deployment.yaml'
                     sh 'kubectl apply -f k8s/service.yaml'
