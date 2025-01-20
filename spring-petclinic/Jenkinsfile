@@ -89,7 +89,11 @@ spec:
             }
             steps {
                 container('maven') {
-                    sh 'mvn clean package -DskipTests'
+                    script {
+                        dir('spring-petclinic') {
+                            sh 'mvn clean package -DskipTests'
+                        }
+                    }
                 }
             }
         }
