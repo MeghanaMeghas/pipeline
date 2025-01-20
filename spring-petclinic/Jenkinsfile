@@ -3,7 +3,6 @@ pipeline {
 
     tools {
         maven 'm3'
-        jdk 'java'
     }
 
     environment {
@@ -15,13 +14,12 @@ pipeline {
         SONARQUBE_URL = 'http://34.121.131.107:9000'
         SONARQUBE_TOKEN = credentials('jenkins-sonar')
     }
-
     stages {
         stage('Clone Repository') {
             agent {
                 kubernetes {
                     label 'petclinic-pod'
-                    defaultContainer 'docker'
+                    defaultContainer 'maven'
                     yaml '''
 apiVersion: v1
 kind: Pod
@@ -29,6 +27,11 @@ metadata:
   name: petclinic-pod
 spec:
   containers:
+    - name: maven
+      image: maven:3.8.7-openjdk-17
+      command:
+        - cat
+      tty: true
     - name: docker
       image: docker:19.03.12
       privileged: true
@@ -47,7 +50,7 @@ spec:
                 }
             }
             steps {
-                checkout scm  // Checkout the repository to Jenkins workspace
+                checkout scm
             }
         }
 
@@ -55,7 +58,7 @@ spec:
             agent {
                 kubernetes {
                     label 'petclinic-pod'
-                    defaultContainer 'docker'
+                    defaultContainer 'maven'
                     yaml '''
 apiVersion: v1
 kind: Pod
@@ -63,6 +66,11 @@ metadata:
   name: petclinic-pod
 spec:
   containers:
+    - name: maven
+      image: maven:3.8.7-openjdk-17
+      command:
+        - cat
+      tty: true
     - name: docker
       image: docker:19.03.12
       privileged: true
@@ -81,8 +89,8 @@ spec:
                 }
             }
             steps {
-                container('docker') {
-                    sh 'mvn clean package'
+                container('maven') {
+                    sh 'mvn clean package -DskipTests'
                 }
             }
         }
@@ -91,7 +99,7 @@ spec:
             agent {
                 kubernetes {
                     label 'petclinic-pod'
-                    defaultContainer 'docker'
+                    defaultContainer 'maven'
                     yaml '''
 apiVersion: v1
 kind: Pod
@@ -99,25 +107,22 @@ metadata:
   name: petclinic-pod
 spec:
   containers:
+    - name: maven
+      image: maven:3.8.7-openjdk-17
+      command:
+        - cat
+      tty: true
     - name: docker
       image: docker:19.03.12
       privileged: true
       command:
         - cat
       tty: true
-      volumeMounts:
-        - name: docker-socket
-          mountPath: /var/run/docker.sock
-  volumes:
-    - name: docker-socket
-      hostPath:
-        path: /var/run/docker.sock
-        type: Socket
-'''
+  '''
                 }
             }
             steps {
-                container('docker') {
+                container('maven') {
                     withSonarQubeEnv('jenkins-sonar') {
                         sh """
                             mvn sonar:sonar \
@@ -143,6 +148,11 @@ metadata:
   name: petclinic-pod
 spec:
   containers:
+    - name: maven
+      image: maven:3.8.7-openjdk-17
+      command:
+        - cat
+      tty: true
     - name: docker
       image: docker:19.03.12
       privileged: true
@@ -162,10 +172,7 @@ spec:
             }
             steps {
                 container('docker') {
-                    script {
-                        // Build the Docker image
-                        sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1 ."
-                    }
+                    sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1 ."
                 }
             }
         }
@@ -201,13 +208,8 @@ spec:
             }
             steps {
                 container('docker') {
-                    script {
-                        // Login to Docker Hub
-                        sh "echo Nani@9769 | docker login -u rohith9769 --password-stdin"
-
-                        // Push Docker image to Docker Hub
-                        sh "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1"
-                    }
+                    sh "echo Nani@9769 | docker login -u rohith9769 --password-stdin"
+                    sh "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1"
                 }
             }
         }
@@ -243,11 +245,9 @@ spec:
             }
             steps {
                 container('docker') {
-                    script {
-                        sh "gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_ZONE} --project ${GKE_PROJECT}"
-                        sh 'kubectl apply -f k8s/deployment.yaml'
-                        sh 'kubectl apply -f k8s/service.yaml'
-                    }
+                    sh "gcloud container clusters get-credentials ${GKE_CLUSTER_NAME} --zone ${GKE_ZONE} --project ${GKE_PROJECT}"
+                    sh 'kubectl apply -f k8s/deployment.yaml'
+                    sh 'kubectl apply -f k8s/service.yaml'
                 }
             }
         }
