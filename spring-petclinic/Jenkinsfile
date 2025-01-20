@@ -53,12 +53,12 @@ spec:
             }
         }
 
-        stage('Build') {
-            agent {
-                kubernetes {
-                    label 'petclinic-pod'
-                    defaultContainer 'maven'
-                    yaml '''
+        stage('Build Docker Image') {
+    agent {
+        kubernetes {
+            label 'petclinic-pod'
+            defaultContainer 'docker'
+            yaml '''
 apiVersion: v1
 kind: Pod
 metadata:
@@ -85,18 +85,18 @@ spec:
         path: /var/run/docker.sock
         type: Socket
 '''
-                }
-            }
-            steps {
-                container('maven') {
-                    script {
-                        dir('spring-petclinic') {
-                            sh 'mvn clean package -DskipTests'
-                        }
-                    }
+        }
+    }
+    steps {
+        container('docker') {
+            script {
+                dir('spring-petclinic') { // Navigate to the correct directory
+                    sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1 -f Dockerfile ."
                 }
             }
         }
+    }
+}
 
         stage('Build Docker Image') {
             agent {
