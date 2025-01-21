@@ -177,7 +177,8 @@ spec:
                     fi
  
                     # Use the custom template from the root directory             
-                    cp custom-html.tpl custom-html.tpl             
+                    cp pipeline/spring-petclinic/custom-html.tpl custom-html.tpl
+             
                     
                     # Run Trivy scan and generate the HTML report using the custom template             
                     trivy image --severity HIGH,CRITICAL --format template --template "@custom-html.tpl" -o trivy-scan-report.html ${FULL_IMAGE_PATH}
