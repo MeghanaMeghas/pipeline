@@ -136,8 +136,8 @@ spec:
             steps {
                 container('docker') {
                     script {
-                        dir('spring-petclinic') {
-                            sh "docker build -t ${FULL_IMAGE_PATH} -f Dockerfile ."
+                        dir('spring-petclinic') { // Navigate to the correct directory
+                            sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1 -f Dockerfile ."
                         }
                     }
                 }
@@ -182,19 +182,18 @@ spec:
                 trivy image --severity HIGH,CRITICAL --format template --template "@html.tpl" -o trivy-scan-report.html ${FULL_IMAGE_PATH}
                 '''
             }
-        }
- 
-        post {
-            always {
-                echo "Publishing Trivy Scan Report..."
-                publishHTML([
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: '.',
-                    reportFiles: 'trivy-scan-report.html',
-                    reportName: 'Trivy Vulnerability Report'
-                ])
+            post {
+                always {
+                    echo "Publishing Trivy Scan Report..."
+                    publishHTML([
+                        allowMissing: false, 
+                        alwaysLinkToLastBuild: true, 
+                        keepAll: true, 
+                        reportDir: '.', 
+                        reportFiles: 'trivy-scan-report.html', 
+                        reportName: 'Trivy Vulnerability Report'
+                    ])
+                }
             }
         }
  
@@ -230,7 +229,7 @@ spec:
             steps {
                 container('docker') {
                     sh "echo Nani@9769 | docker login -u rohith9769 --password-stdin"
-                    sh "docker push ${FULL_IMAGE_PATH}"
+                    sh "docker push ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1"
                 }
             }
         }
