@@ -176,11 +176,11 @@ spec:
                         exit 1
                     fi
  
-                    # Download the HTML template for Trivy reports
-                    curl -O https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
- 
-                    # Run Trivy scan and generate the HTML report using the template
-                    trivy image --severity HIGH,CRITICAL --format template --template "@html.tpl" -o trivy-scan-report.html ${FULL_IMAGE_PATH}
+                    # Use the custom template from the root directory             
+                    cp custom-html.tpl custom-html.tpl             
+                    
+                    # Run Trivy scan and generate the HTML report using the custom template             
+                    trivy image --severity HIGH,CRITICAL --format template --template "@custom-html.tpl" -o trivy-scan-report.html ${FULL_IMAGE_PATH}
                 '''
             }
             post {
