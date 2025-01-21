@@ -171,6 +171,7 @@ spec:
                 sh '''
                 # Install curl if missing         
                 apk add --no-cache curl
+                curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
                 # Download the HTML template for Trivy reports
                 curl -O https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
                 # Run Trivy scan and generate the HTML report using the template
