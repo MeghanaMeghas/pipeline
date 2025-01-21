@@ -21,9 +21,10 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Install Trivy
-RUN apk add --no-cache curl \
-    && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
-    
+RUN apt-get update \
+&& apt-get install -y curl \
+&& curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh
+
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
