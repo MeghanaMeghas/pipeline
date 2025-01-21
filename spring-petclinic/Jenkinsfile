@@ -1,18 +1,16 @@
 pipeline {
     agent any
-
     tools {
         maven 'm3'
     }
-
     environment {
         GKE_CLUSTER_NAME = 'jenkins-cd'
         GKE_PROJECT = 'phrasal-verve-447910-d9'
         GKE_ZONE = 'us-central1-a'
         DOCKER_REGISTRY = 'docker.io/rohith9769'
         DOCKER_IMAGE_NAME = 'pet-image'
+        FULL_IMAGE_PATH = "${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1"
     }
-
     stages {
         stage('Clone Repository') {
             agent {
@@ -52,7 +50,7 @@ spec:
                 checkout scm
             }
         }
-
+ 
         stage('Build') {
             agent {
                 kubernetes {
@@ -97,7 +95,7 @@ spec:
                 }
             }
         }
-
+ 
         stage('Build Docker Image') {
             agent {
                 kubernetes {
@@ -135,14 +133,82 @@ spec:
             steps {
                 container('docker') {
                     script {
-                dir('spring-petclinic') { // Navigate to the correct directory
-                    sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1 -f Dockerfile ."
-                }
-            }
+                        dir('spring-petclinic') {
+                            sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1 -f Dockerfile ."
+                        }
+                    }
                 }
             }
         }
-
+ 
+        stage('Run Trivy Scan') {
+            agent {
+                kubernetes {
+                    label 'petclinic-pod'
+                    defaultContainer 'docker'
+                    yaml '''
+apiVersion: v1
+kind: Pod
+metadata:
+  name: petclinic-pod
+spec:
+  containers:
+    - name: docker
+      image: docker:19.03.12
+      privileged: true
+      command:
+        - cat
+      tty: true
+      volumeMounts:
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+  volumes:
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
+'''
+                }
+            }
+            steps {
+                sh '''
+                    # Install curl if missing
+                    apk add --no-cache curl
+ 
+                    # Install Trivy
+                    curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b ./bin
+ 
+                    # Ensure Trivy is in the PATH
+                    export PATH=$PATH:$(pwd)/bin
+ 
+                    # Verify Trivy installation
+                    if ! command -v trivy &> /dev/null; then
+                        echo "Trivy could not be found, exiting..."
+                        exit 1
+                    fi
+ 
+                    # Download the HTML template for Trivy reports
+                    curl -O https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
+ 
+                    # Run Trivy scan and generate the HTML report using the template
+                    trivy image --severity HIGH,CRITICAL --format template --template "@html.tpl" -o trivy-scan-report.html ${FULL_IMAGE_PATH}
+                '''
+            }
+            post {
+                always {
+                    echo "Publishing Trivy Scan Report..."
+                    publishHTML([
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'trivy-scan-report.html',
+                        reportName: 'Trivy Vulnerability Report'
+                    ])
+                }
+            }
+        }
+ 
         stage('Push Docker Image to Docker Hub') {
             agent {
                 kubernetes {
@@ -179,7 +245,7 @@ spec:
                 }
             }
         }
-
+ 
         stage('Deploy to GKE') {
             agent {
                 kubernetes {
