@@ -178,7 +178,7 @@ spec:
 
                     
                     # Run Trivy scan and generate the HTML report using the custom template             
-                    trivy image --severity HIGH,CRITICAL --format template --template "@custom-html.tpl" -o trivy-scan-report.html ${FULL_IMAGE_PATH}
+                    trivy image --severity HIGH,CRITICAL --format template --template "@spring-petclinic/custom-html.tpl" -o trivy-scan-report.html ${FULL_IMAGE_PATH}
                 '''
             }
             post {
