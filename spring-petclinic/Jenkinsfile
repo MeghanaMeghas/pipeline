@@ -1,5 +1,5 @@
 pipeline {
-    agent none
+    agent any
     tools {
         maven 'm3'
     }
@@ -170,7 +170,7 @@ spec:
             steps {
                 sh '''
                 # Install curl if missing         
-                apt-get update && apt-get install -y curl
+                apk add --no-cache curl
                 # Download the HTML template for Trivy reports
                 curl -O https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
                 # Run Trivy scan and generate the HTML report using the template
