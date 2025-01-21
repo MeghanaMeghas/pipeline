@@ -33,8 +33,7 @@ spec:
         - cat
       tty: true
     - name: docker
-      image: docker:19.03.12
-      privileged: true
+      image: ubuntu:20.04 # Updated to use Ubuntu-based image for `apt-get` and `curl`
       command:
         - cat
       tty: true
@@ -72,8 +71,7 @@ spec:
         - cat
       tty: true
     - name: docker
-      image: docker:19.03.12
-      privileged: true
+      image: ubuntu:20.04
       command:
         - cat
       tty: true
@@ -117,8 +115,7 @@ spec:
         - cat
       tty: true
     - name: docker
-      image: docker:19.03.12
-      privileged: true
+      image: ubuntu:20.04
       command:
         - cat
       tty: true
@@ -136,7 +133,7 @@ spec:
             steps {
                 container('docker') {
                     script {
-                        dir('spring-petclinic') { // Navigate to the correct directory
+                        dir('spring-petclinic') {
                             sh "docker build -t ${DOCKER_REGISTRY}/${DOCKER_IMAGE_NAME}:v1 -f Dockerfile ."
                         }
                     }
@@ -157,8 +154,7 @@ metadata:
 spec:
   containers:
     - name: docker
-      image: docker:19.03.12
-      privileged: true
+      image: ubuntu:20.04
       command:
         - cat
       tty: true
@@ -175,8 +171,8 @@ spec:
             }
             steps {
                 sh '''
-                # Install curl if missing         
                 apt-get update && apt-get install -y curl
+ 
                 # Download the HTML template for Trivy reports
                 curl -O https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/html.tpl
  
@@ -188,11 +184,11 @@ spec:
                 always {
                     echo "Publishing Trivy Scan Report..."
                     publishHTML([
-                        allowMissing: false, 
-                        alwaysLinkToLastBuild: true, 
-                        keepAll: true, 
-                        reportDir: '.', 
-                        reportFiles: 'trivy-scan-report.html', 
+                        allowMissing: false,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'trivy-scan-report.html',
                         reportName: 'Trivy Vulnerability Report'
                     ])
                 }
@@ -212,8 +208,7 @@ metadata:
 spec:
   containers:
     - name: docker
-      image: docker:19.03.12
-      privileged: true
+      image: ubuntu:20.04
       command:
         - cat
       tty: true
@@ -254,8 +249,7 @@ spec:
         - cat
       tty: true
     - name: docker
-      image: docker:19.03.12
-      privileged: true
+      image: ubuntu:20.04
       command:
         - cat
       tty: true
