@@ -177,7 +177,7 @@ spec:
                     fi
  
                     # Use the custom template from the root directory             
-                    cp pipeline/spring-petclinic/custom-html.tpl custom-html.tpl
+                    cp custom-html.tpl custom-html.tpl
              
                     
                     # Run Trivy scan and generate the HTML report using the custom template             
